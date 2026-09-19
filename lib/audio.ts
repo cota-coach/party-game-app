@@ -18,9 +18,12 @@ export class AudioManager {
       const audio = this.create(track.src);
       audio.loop = true;
       audio.volume = track.normalVolume;
-      void audio.play().catch(() => undefined);
       return { audio, normalVolume: track.normalVolume, duckedVolume: track.duckedVolume };
     });
+    const playAttempts = this.backgrounds.map(({ audio }) => {
+      try { return audio.play(); } catch { return Promise.resolve(); }
+    });
+    void Promise.allSettled(playAttempts);
   }
   play(src: string, options: { loop?: boolean; duckBackgrounds?: boolean } = {}) {
     const audio = this.getOrCreate(src);
