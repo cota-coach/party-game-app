@@ -1,4 +1,4 @@
-import type { Player } from "@/types/player";
+import type { Player } from "../types/player";
 
 export const STORAGE_KEYS = { players: "players", tongue: "usedTongueTwisters", choices: "usedUltimateChoices" } as const;
 
@@ -13,5 +13,7 @@ export const storage = {
   getUsedTongueTwisters: () => readArray<string>(STORAGE_KEYS.tongue, (v): v is string => typeof v === "string"),
   addUsedTongueTwister(id: string) { const current = this.getUsedTongueTwisters(); if (!current.includes(id)) writeArray(STORAGE_KEYS.tongue, [...current, id]); },
   getUsedUltimateChoices: () => readArray<string>(STORAGE_KEYS.choices, (v): v is string => typeof v === "string"),
+  resetTongueTwisterHistory() { writeArray(STORAGE_KEYS.tongue, []); },
+  resetUltimateChoiceHistory() { writeArray(STORAGE_KEYS.choices, []); },
   resetPromptHistory() { writeArray(STORAGE_KEYS.tongue, []); writeArray(STORAGE_KEYS.choices, []); }
 };
