@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { TONGUE_TWISTERS } from "@/data/tongue-twisters";
 import { AudioManager } from "@/lib/audio";
 import { BombScheduler } from "@/lib/bomb-game";
-import { COMMAND_DISPLAY_MS, GAME_AUDIO_SOURCES, SOUND_PATHS } from "@/lib/game-config";
-import { pickRandom } from "@/lib/random";
+import { COMMAND_DISPLAY_MS, FAIL_TROMBONE_DELAY_MS, GAME_AUDIO_SOURCES, ROULETTE_DECISION_TIME_MS, SOUND_PATHS } from "@/lib/game-config";
+import { pickRandom, pickRandomAvoiding } from "@/lib/random";
 import { storage } from "@/lib/storage";
 import type { BombSettings, CommandId, DifficultySetting, EventDensity, ExplosionMode, TongueTwister } from "@/types/bomb";
 import type { Player } from "@/types/player";
@@ -16,16 +16,16 @@ const DEFAULT_SETTINGS:BombSettings={selectedPlayerIds:[],difficulty:"random",ex
 
 export default function BombPage(){
  const [phase,setPhase]=useState<Phase>("rules"),[players,setPlayers]=useState<Player[]>([]),[settings,setSettings]=useState(DEFAULT_SETTINGS),[twister,setTwister]=useState<TongueTwister>(),[exhausted,setExhausted]=useState(false),[starter,setStarter]=useState(""),[roulette,setRoulette]=useState(false),[activeCommand,setActiveCommand]=useState<CommandId>(),[fakeFlash,setFakeFlash]=useState(false);
- const scheduler=useRef<BombScheduler>(),audio=useRef<AudioManager>(),displayTimer=useRef<ReturnType<typeof setTimeout>>(),fakeTimer=useRef<ReturnType<typeof setTimeout>>(),rouletteTimer=useRef<ReturnType<typeof setInterval>>(),commandBusy=useRef(false);
- const cleanup=useCallback(()=>{scheduler.current?.stop();scheduler.current=undefined;if(displayTimer.current)clearTimeout(displayTimer.current);if(fakeTimer.current)clearTimeout(fakeTimer.current);if(rouletteTimer.current)clearInterval(rouletteTimer.current);audio.current?.stopAll();commandBusy.current=false},[]);
+ const scheduler=useRef<BombScheduler>(),audio=useRef<AudioManager>(),displayTimer=useRef<ReturnType<typeof setTimeout>>(),fakeTimer=useRef<ReturnType<typeof setTimeout>>(),rouletteTimer=useRef<ReturnType<typeof setTimeout>>(),failTromboneTimer=useRef<ReturnType<typeof setTimeout>>(),lastFakeSound=useRef<string>(),commandBusy=useRef(false);
+ const cleanup=useCallback(()=>{scheduler.current?.stop();scheduler.current=undefined;if(displayTimer.current)clearTimeout(displayTimer.current);if(fakeTimer.current)clearTimeout(fakeTimer.current);if(rouletteTimer.current)clearTimeout(rouletteTimer.current);if(failTromboneTimer.current)clearTimeout(failTromboneTimer.current);audio.current?.stopAll();commandBusy.current=false},[]);
  useEffect(()=>{const found=storage.getPlayers();setPlayers(found);setSettings(s=>({...s,selectedPlayerIds:found.map(p=>p.id)}));audio.current=new AudioManager();return cleanup},[cleanup]);
  const drawTwister=()=>{const used=storage.getUsedTongueTwisters();const available=TONGUE_TWISTERS.filter(t=>(settings.difficulty==="random"||t.difficulty===settings.difficulty)&&!used.includes(t.id));const next=pickRandom(available);if(!next){setExhausted(true);setTwister(undefined);return}storage.addUsedTongueTwister(next.id);setTwister(next);setExhausted(false)};
  const goTwister=()=>{drawTwister();setPhase("twister")};
  const selectedPlayers=players.filter(p=>settings.selectedPlayerIds.includes(p.id));
- const rouletteStart=()=>{if(selectedPlayers.length<2)return;audio.current?.stopEffects();audio.current?.unlock([SOUND_PATHS.roulette.decision]);audio.current?.play(SOUND_PATHS.roulette.drumroll,{loop:true});setRoulette(true);setStarter("");let count=0;rouletteTimer.current=setInterval(()=>{const next=pickRandom(selectedPlayers)?.name??"";setStarter(next);if(++count>=12){if(rouletteTimer.current)clearInterval(rouletteTimer.current);rouletteTimer.current=undefined;audio.current?.stopEffects();audio.current?.play(SOUND_PATHS.roulette.decision);setRoulette(false)}},100)};
+ const rouletteStart=()=>{if(selectedPlayers.length<2)return;const winner=pickRandom(selectedPlayers);if(!winner)return;audio.current?.stopEffects();audio.current?.play(SOUND_PATHS.roulette);setRoulette(true);setStarter("");const startedAt=Date.now();const spin=()=>{const elapsed=Date.now()-startedAt;const remaining=ROULETTE_DECISION_TIME_MS-elapsed;if(remaining<=0){setStarter(winner.name);setRoulette(false);rouletteTimer.current=undefined;return}setStarter(pickRandom(selectedPlayers)?.name??"");const delay=elapsed<3500?100:elapsed<5000?220:400;rouletteTimer.current=setTimeout(spin,Math.min(delay,remaining))};spin()};
  const onCommand=(id:CommandId)=>{commandBusy.current=true;setActiveCommand(id);audio.current?.stopEffects();audio.current?.play(SOUND_PATHS.commands[id],{duckTicking:true});if(displayTimer.current)clearTimeout(displayTimer.current);displayTimer.current=setTimeout(()=>{setActiveCommand(undefined);commandBusy.current=false;audio.current?.restoreTicking()},COMMAND_DISPLAY_MS)};
- const onFake=()=>{if(commandBusy.current)return;setFakeFlash(true);audio.current?.play(pickRandom(SOUND_PATHS.fake)??SOUND_PATHS.fake[0]);if(fakeTimer.current)clearTimeout(fakeTimer.current);fakeTimer.current=setTimeout(()=>setFakeFlash(false),900)};
- const explode=()=>{audio.current?.stopAll();audio.current?.play(SOUND_PATHS.explosion);setActiveCommand(undefined);setFakeFlash(false);setPhase("exploded")};
+ const onFake=()=>{if(commandBusy.current)return;const sound=pickRandomAvoiding(SOUND_PATHS.fake,lastFakeSound.current)??SOUND_PATHS.fake[0];lastFakeSound.current=sound;setFakeFlash(true);audio.current?.play(sound);if(fakeTimer.current)clearTimeout(fakeTimer.current);fakeTimer.current=setTimeout(()=>setFakeFlash(false),900)};
+ const explode=()=>{audio.current?.stopAll();audio.current?.play(SOUND_PATHS.explosion.main);failTromboneTimer.current=setTimeout(()=>audio.current?.play(SOUND_PATHS.explosion.failTrombone),FAIL_TROMBONE_DELAY_MS);setActiveCommand(undefined);setFakeFlash(false);setPhase("exploded")};
  const startGame=()=>{if(!twister)return;cleanup();audio.current?.unlock(GAME_AUDIO_SOURCES);audio.current?.startTicking(SOUND_PATHS.ticking);setPhase("playing");const next=new BombScheduler(settings,{explode,command:onCommand,fake:onFake});scheduler.current=next;next.start()};
  const homeGuard=(event:React.MouseEvent<HTMLAnchorElement>)=>{if(phase==="playing"&&!confirm("ゲームを終了しますか？\n爆弾タイマーと音声を停止します。")){event.preventDefault();return}cleanup()};
  const again=()=>{cleanup();setStarter("");setActiveCommand(undefined);setPhase("settings")};
