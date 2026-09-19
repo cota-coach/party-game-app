@@ -5,6 +5,7 @@
 | 用途 | 推奨ファイル名 | 保存先 | 用意する音 |
 | --- | --- | --- | --- |
 | 導火線・ticking | `ticking.mp3` | `bomb/ticking/ticking.mp3` | 継ぎ目なくループできる一定テンポの導火線・時計音 |
+| 時限タイマー | `timer.mp3` | `bomb/ticking/timer.mp3` | tickingと同時にループする、主張しすぎないカチカチ音 |
 | 爆発 | `explosion.mp3` | `bomb/explosion/explosion.mp3` | 短く明確で、敗者が分かる大きな爆発音 |
 | 爆発後の敗者演出 | `fail-trombone.mp3` | `bomb/explosion/fail-trombone.mp3` | 「ファン、ファン、ファ〜ン」と音程が下がるsad trombone音 |
 | リバース指令 | `reverse.mp3` | `bomb/commands/reverse.mp3` | 「リバース！」という聞き取りやすい声 |
