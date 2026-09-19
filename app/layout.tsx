@@ -1,0 +1,9 @@
+import type { Metadata, Viewport } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = { title: "PARTY GAME", description: "みんなで遊べるパーティーゲーム" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#19142c" };
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="ja"><body>{children}</body></html>;
+}
