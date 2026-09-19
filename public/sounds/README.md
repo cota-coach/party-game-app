@@ -14,6 +14,7 @@
 | 3回指令 | `repeat-three.mp3` | `bomb/commands/repeat-three.mp3` | 「お前は3回じゃ！」という聞き取りやすい声 |
 | フェイク・おなら1 | `fart-1.mp3` | `bomb/fake/fart-1.mp3` | 短いおなら系の効果音 |
 | フェイク・おなら2 | `fart-2.mp3` | `bomb/fake/fart-2.mp3` | 1とは違う短いおなら系の効果音 |
-| ルーレット | `drumroll.mp3` | `bomb/roulette/drumroll.mp3` | ドラムロールから最後の「ダン！」まで入った約6秒の音 |
+| フェイク・パフパフ | `fanfare.mp3` | `bomb/fake/fanfare.mp3` | 短くコミカルな「パフパフ」音 |
+| ルーレット | `drumroll.mp3` | `bomb/roulette/drumroll.mp3` | ドラムロールから最後の「ダン！」まで入った音（決定表示は約5.2秒） |
 
 すべてのパスは `public/sounds/` からの相対パスです。

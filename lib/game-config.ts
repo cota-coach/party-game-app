@@ -6,12 +6,12 @@ export const COMMAND_PROTECTION_SECONDS: Partial<Record<CommandId, number>> = { 
 export const COMMAND_DISPLAY_MS = 4500;
 export const FAKE_SOUND_INTERVAL = { min: 9, max: 20 };
 export const FAIL_TROMBONE_DELAY_MS = 1250;
-export const ROULETTE_DECISION_TIME_MS = 6000;
+export const ROULETTE_DECISION_TIME_MS = 5200;
 export const SOUND_PATHS = {
   ticking: "/sounds/bomb/ticking/ticking.mp3",
   explosion: { main: "/sounds/bomb/explosion/explosion.mp3", failTrombone: "/sounds/bomb/explosion/fail-trombone.mp3" },
   commands: { reverse:"/sounds/bomb/commands/reverse.mp3", skipOne:"/sounds/bomb/commands/skip-one.mp3", skipTwo:"/sounds/bomb/commands/skip-two.mp3", repeatTwo:"/sounds/bomb/commands/repeat-two.mp3", repeatThree:"/sounds/bomb/commands/repeat-three.mp3" },
-  fake: ["/sounds/bomb/fake/fart-1.mp3", "/sounds/bomb/fake/fart-2.mp3"],
+  fake: ["/sounds/bomb/fake/fart-1.mp3", "/sounds/bomb/fake/fart-2.mp3", "/sounds/bomb/fake/fanfare.mp3"],
   roulette: "/sounds/bomb/roulette/drumroll.mp3"
 } as const;
 
