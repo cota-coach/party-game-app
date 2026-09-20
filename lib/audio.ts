@@ -3,12 +3,21 @@ export class AudioManager {
   private effects = new Set<HTMLAudioElement>();
   private prepared = new Map<string, HTMLAudioElement>();
   private effectCleanups = new Map<HTMLAudioElement, () => void>();
+  private playbackGenerations = new WeakMap<HTMLAudioElement, number>();
 
   unlock(sources: readonly string[]) {
     sources.forEach((src) => {
       const audio = this.getOrCreate(src);
+      const generation = this.nextPlaybackGeneration(audio);
       audio.muted = true;
-      void audio.play().then(() => { audio.pause(); audio.currentTime = 0; audio.muted = false; }, () => { audio.muted = false; });
+      void audio.play().then(() => {
+        if (this.playbackGenerations.get(audio) !== generation) return;
+        audio.pause();
+        audio.currentTime = 0;
+        audio.muted = false;
+      }, () => {
+        if (this.playbackGenerations.get(audio) === generation) audio.muted = false;
+      });
     });
   }
 
@@ -27,6 +36,8 @@ export class AudioManager {
   }
   play(src: string, options: { loop?: boolean; duckBackgrounds?: boolean } = {}) {
     const audio = this.getOrCreate(src);
+    this.nextPlaybackGeneration(audio);
+    audio.muted = false;
     this.effectCleanups.get(audio)?.();
     this.stop(audio);
     audio.loop = options.loop ?? false;
@@ -46,5 +57,6 @@ export class AudioManager {
   stopAll() { this.stopBackgrounds(); this.stopEffects(); }
   private create(src: string) { const audio = new Audio(src); audio.preload = "auto"; return audio; }
   private getOrCreate(src: string) { const current = this.prepared.get(src); if (current) return current; const audio = this.create(src); this.prepared.set(src, audio); return audio; }
+  private nextPlaybackGeneration(audio: HTMLAudioElement) { const generation = (this.playbackGenerations.get(audio) ?? 0) + 1; this.playbackGenerations.set(audio, generation); return generation; }
   private stop(audio: HTMLAudioElement) { audio.pause(); try { audio.currentTime = 0; } catch { /* Missing or not-yet-loaded audio is safe to ignore. */ } }
 }
