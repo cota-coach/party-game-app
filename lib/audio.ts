@@ -7,8 +7,9 @@ export class AudioManager {
   unlock(sources: readonly string[]) {
     sources.forEach((src) => {
       const audio = this.getOrCreate(src);
-      audio.muted = true;
-      void audio.play().then(() => { audio.pause(); audio.currentTime = 0; audio.muted = false; }, () => { audio.muted = false; });
+      this.stop(audio);
+      audio.muted = false;
+      try { audio.load(); } catch { /* A failed preload must not interrupt game start. */ }
     });
   }
 
@@ -27,6 +28,7 @@ export class AudioManager {
   }
   play(src: string, options: { loop?: boolean; duckBackgrounds?: boolean } = {}) {
     const audio = this.getOrCreate(src);
+    audio.muted = false;
     this.effectCleanups.get(audio)?.();
     this.stop(audio);
     audio.loop = options.loop ?? false;

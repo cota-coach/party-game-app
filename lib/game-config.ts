@@ -4,6 +4,7 @@ export const EVENT_INTERVALS: Record<EventDensity, { min: number; max: number }>
 export const COMMAND_WEIGHTS: Record<CommandId, number> = { reverse:25, skipOne:25, skipTwo:15, repeatTwo:20, repeatThree:15 };
 export const COMMAND_PROTECTION_SECONDS: Partial<Record<CommandId, number>> = { repeatTwo:5, repeatThree:7 };
 export const COMMAND_DISPLAY_MS = 4500;
+export const INITIAL_EVENT_GRACE_MS = 8000;
 export const FAKE_SOUND_INTERVAL = { min: 9, max: 20 };
 export const FAIL_TROMBONE_DELAY_MS = 1250;
 export const ROULETTE_DECISION_TIME_MS = 5200;
